@@ -1,38 +1,64 @@
-import { useState } from 'react';
-import { data } from '../../data';
+import { useState, useEffect } from 'react';
+import supabase from '../config/supabaseClient';
 
 const Options = ({ onVote }) =>  {
 
-    // Function to shuffle array elements (Fisher-Yates shuffle)
-    const shuffleArray = (array) => {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    };
+    const [ randomQuotes, setRandomQuotes ] = useState([]);
+    const [ loading, setLoading ] = useState(true);
+    const [ error, setError ] = useState(null);
 
-    // Shuffle the quotes array and get two random quotes
-    const shuffledQuotes = shuffleArray([...data]);
-    const randomQuote1 = shuffledQuotes[0];
-    const randomQuote2 = shuffledQuotes[1];
+    useEffect(() => {
+        const fetchRandomQuotes = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('quotes')
+                    .select('quote_Name');
+    
+                if (error) {
+                    throw error;
+                }
 
-    // Function to handle vote for the selected quote
+                // Shuffle the array of quote names to get a random order
+            const shuffledQuotes = data.map(quote => quote.quote_Name).sort(() => Math.random() - 0.5);
+            
+            // Select the first two quotes from the shuffled array
+            const randomQuotes = shuffledQuotes.slice(0, 2);
+
+            console.log('Random quotes:', randomQuotes);
+            setRandomQuotes(randomQuotes);
+            setLoading(false);
+            setError(null);
+            } catch (error) {
+                console.error('Error fetching random quotes:', error.message);
+                setLoading(false);
+                setError('Error fetching random quotes');
+            }
+        };
+    
+        fetchRandomQuotes();
+    }, []);
+
     const handleVote = (quoteID) => {
-        // Call the onVote callback with the selected quote ID
         onVote(quoteID);
     };
+
+    if (loading) {
+        return <p>Loading...</p>;
+    }
+
+    if (error) {
+        return <p>Error: {error}</p>;
+    }
 
     return (
         <>
             <div className="flex flex-col">
-                
                 {/* Display the first random quote card */}
                 <div
-                className="p-8 border border-gray-200 rounded-md cursor-pointer"
-                onClick={() => handleVote(randomQuote1.quoteID)}
+                    className="p-8 border border-gray-200 rounded-md cursor-pointer"
+                    onClick={() => handleVote(randomQuotes[0])}
                 >
-                    <p>{randomQuote1.quoteName}</p>
+                    <p>{randomQuotes[0]}</p>
                 </div>
 
                 {/* Separator line */}
@@ -44,14 +70,12 @@ const Options = ({ onVote }) =>  {
                 
                 {/* Display the second random quote card */}
                 <div
-                className="p-8 border border-gray-200 rounded-md cursor-pointer"
-                onClick={() => handleVote(randomQuote2.quoteID)}
+                    className="p-8 border border-gray-200 rounded-md cursor-pointer"
+                    onClick={() => handleVote(randomQuotes[1])}
                 >
-                    <p>{randomQuote2.quoteName}</p>
+                    <p>{randomQuotes[1]}</p>
                 </div>
-
             </div>
-
         </>
     );
 

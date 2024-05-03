@@ -9,7 +9,7 @@ function App() {
   return (
     <>
     <div className="App">
-    <div className="mx-auto max-w-screen-lg font-custom">
+    <div className="mx-auto max-w-screen-md font-custom">
         <Header />
         <Card votes={votes} />
         <Vote setVotes={setVotes} />
